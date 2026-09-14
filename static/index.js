@@ -42,15 +42,174 @@ const MODE_NORMAL = 1, MODE_ENDLESS = 2, MODE_PRACTICE = 3;
         (isDesktop ? '#welcome,#GameTimeLayer,#GameLayerBG,#GameScoreLayer.SHADE{position: absolute;}' :
             '#welcome,#GameTimeLayer,#GameLayerBG,#GameScoreLayer.SHADE{position:fixed;}@media screen and (orientation:landscape) {#landscape {display: box; display: -webkit-box; display: -moz-box; display: -ms-flexbox;}}') +
         '</style>');
-    let map = {'d': 1, 'f': 2, 'j': 3, 'k': 4};
-    if (isDesktop) {
-        document.write('<div id="gameBody">');
-        document.onkeydown = function (e) {
-            let key = e.key.toLowerCase();
-            if (Object.keys(map).indexOf(key) !== -1) {
-                click(map[key])
+    // ---- Keybinds -------------------------------------------------------
+    // To change the default keys, edit this list. Players can also rebind
+    // keys in Settings; their choices are saved in localStorage.
+    // `screens` tells where the action works: welcome, settings, game, score.
+    // Values are KeyboardEvent.key names, lowercased (' ' is the space bar).
+    const KEYBIND_ACTIONS = [
+        { action: 'lane1',    key: 'd',      screens: ['game'] },
+        { action: 'lane2',    key: 'f',      screens: ['game'] },
+        { action: 'lane3',    key: 'j',      screens: ['game'] },
+        { action: 'lane4',    key: 'k',      screens: ['game'] },
+        { action: 'start',    key: ' ',      screens: ['welcome'] },
+        { action: 'retry',    key: 'r',      screens: ['game', 'score'] },
+        { action: 'back',     key: 'escape', screens: ['game', 'score', 'settings'] },
+        { action: 'mode',     key: 'm',      screens: ['welcome'] },
+        { action: 'settings', key: 's',      screens: ['welcome'] },
+        { action: 'sound',    key: 'v',      screens: ['welcome', 'settings'] },
+    ];
+    const KEYBIND_STORAGE = 'keybinds';
+
+    let keybinds = loadKeybinds();
+    let rebindingAction = null;
+
+    function defaultKeybinds() {
+        let binds = {};
+        for (let a of KEYBIND_ACTIONS) binds[a.action] = a.key;
+        return binds;
+    }
+
+    function loadKeybinds() {
+        let binds = defaultKeybinds();
+        let saved = null;
+        try { saved = JSON.parse(localStorage.getItem(KEYBIND_STORAGE)); } catch (e) {}
+        if (saved) {
+            for (let a in binds) if (typeof saved[a] === 'string') binds[a] = saved[a];
+        } else {
+            // Migrate the old 4-letter "keyboard" cookie (e.g. "dfjk").
+            let old = document.cookie.match(/(?:^|;)\s*keyboard=([^;]*)/);
+            old = old ? unescape(old[1]).toLowerCase() : '';
+            if (old.length === 4) {
+                for (let i = 0; i < 4; i++) binds['lane' + (i + 1)] = old.charAt(i);
             }
         }
+        return binds;
+    }
+
+    function saveKeybinds() {
+        try { localStorage.setItem(KEYBIND_STORAGE, JSON.stringify(keybinds)); } catch (e) {}
+    }
+
+    function keyLabel(key) {
+        const names = { ' ': 'Space', 'escape': 'Esc', 'arrowleft': '←', 'arrowright': '→', 'arrowup': '↑', 'arrowdown': '↓' };
+        if (names[key]) return names[key];
+        return key.length === 1 ? key.toUpperCase() : key.charAt(0).toUpperCase() + key.slice(1);
+    }
+
+    function currentScreen() {
+        if ($('#welcome').css('display') !== 'none') {
+            return $('#setting').css('display') !== 'none' ? 'settings' : 'welcome';
+        }
+        return $('#GameScoreLayer').css('display') !== 'none' ? 'score' : 'game';
+    }
+
+    function runAction(action) {
+        switch (action) {
+            case 'lane1': case 'lane2': case 'lane3': case 'lane4':
+                click(parseInt(action.slice(4))); break;
+            case 'start': w.readyBtn(); break;
+            case 'retry': w.replayBtn(); break;
+            case 'back':
+                if (currentScreen() === 'settings') w.settingsOk(); else w.backBtn();
+                break;
+            case 'mode': w.changeMode(mode % 3 + 1); break;
+            case 'settings': w.show_setting(); break;
+            case 'sound': w.changeSoundMode(); break;
+        }
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        let key = e.key.toLowerCase();
+
+        if (rebindingAction) {
+            if (key === 'tab') { stopRebinding(); return; }
+            e.preventDefault();
+            setKeybind(rebindingAction, key);
+            return;
+        }
+        // Do not steal keys while the player types in a text field.
+        if ($(e.target).is('input, textarea')) {
+            if (key === 'escape') e.target.blur();
+            return;
+        }
+        // Let Bootstrap handle keys while the mode list is open.
+        if ($('.dropdown-menu.show').length) return;
+
+        let screen = currentScreen();
+        let match = KEYBIND_ACTIONS.find(a => keybinds[a.action] === key && a.screens.includes(screen));
+        if (!match) return;
+        e.preventDefault();
+        if (!e.repeat || match.action.startsWith('lane')) runAction(match.action);
+    });
+
+    // Put the bound key on every <kbd data-kb="action"> hint.
+    function renderKeyHints() {
+        $('[data-kb]').each(function () {
+            $(this).text(keyLabel(keybinds[this.dataset.kb]));
+        });
+    }
+
+    function renderKeybindSettings() {
+        let box = $('#keybinds').empty();
+        for (let a of KEYBIND_ACTIONS) {
+            let row = $('<div class="keybind-row"></div>');
+            $('<span></span>').text(I18N['kb-' + a.action]).appendTo(row);
+            $('<button type="button" class="btn btn-sm btn-light keybind-btn"></button>')
+                .attr('data-action', a.action)
+                .text(rebindingAction === a.action ? I18N['kb-press'] : keyLabel(keybinds[a.action]))
+                .toggleClass('active', rebindingAction === a.action)
+                .on('click', function (e) {
+                    e.stopPropagation();
+                    if (rebindingAction === a.action) stopRebinding(); else startRebinding(a.action);
+                })
+                .appendTo(row);
+            row.appendTo(box);
+        }
+    }
+
+    function startRebinding(action) {
+        rebindingAction = action;
+        renderKeybindSettings();
+        $(`.keybind-btn[data-action="${action}"]`).focus();
+    }
+
+    function stopRebinding() {
+        rebindingAction = null;
+        renderKeybindSettings();
+    }
+
+    // Every key belongs to one action only. If the new key is already in
+    // use, the two actions swap keys.
+    function setKeybind(action, key) {
+        let other = Object.keys(keybinds).find(a => a !== action && keybinds[a] === key);
+        if (other) keybinds[other] = keybinds[action];
+        keybinds[action] = key;
+        saveKeybinds();
+        renderKeyHints();
+        stopRebinding();
+        $(`.keybind-btn[data-action="${action}"]`).focus();
+    }
+
+    w.resetKeybinds = function () {
+        keybinds = defaultKeybinds();
+        saveKeybinds();
+        renderKeyHints();
+        stopRebinding();
+    }
+
+    // A mouse click outside the key buttons cancels a rebind.
+    document.addEventListener('click', function () {
+        if (rebindingAction) stopRebinding();
+    });
+
+    renderKeyHints();
+    renderKeybindSettings();
+    // ---------------------------------------------------------------------
+
+    if (isDesktop) {
+        document.write('<div id="gameBody">');
     }
 
     let body, blockSize, GameLayer = [],
@@ -98,10 +257,10 @@ const MODE_NORMAL = 1, MODE_ENDLESS = 2, MODE_PRACTICE = 3;
     w.changeSoundMode = function() {
         if (soundMode === 'on') {
             soundMode = 'off';
-            $('#sound').text(I18N['sound-off']);
+            $('#sound-label').text(I18N['sound-off']);
         } else {
             soundMode = 'on';
-            $('#sound').text(I18N['sound-on']);
+            $('#sound-label').text(I18N['sound-on']);
         }
         cookie('soundMode', soundMode);
     }
@@ -113,7 +272,7 @@ const MODE_NORMAL = 1, MODE_ENDLESS = 2, MODE_PRACTICE = 3;
     w.changeMode = function(m) {
         mode = m;
         cookie('gameMode', m);
-        $('#mode').text(modeToString(m));
+        $('#mode-label').text(modeToString(m));
     }
 
     w.readyBtn = function() {
@@ -176,7 +335,7 @@ const MODE_NORMAL = 1, MODE_ENDLESS = 2, MODE_PRACTICE = 3;
         _gameOver = false,
         _gameStart = false,
         _gameSettingNum=20,
-        _gameTime, _gameTimeNum, _gameScore, _date1, deviationTime;
+        _gameTime, _gameOverTimer, _gameTimeNum, _gameScore, _date1, deviationTime;
 
     let _gameStartTime, _gameStartDatetime;
 
@@ -197,6 +356,10 @@ const MODE_NORMAL = 1, MODE_ENDLESS = 2, MODE_PRACTICE = 3;
     }
 
     function gameRestart() {
+        // Stop the timers of a game that is still running or just ended.
+        clearInterval(_gameTime);
+        clearTimeout(_gameOverTimer);
+        GameLayerBG.className = '';
         _gameBBList = [];
         _gameBBListIndex = 0;
         _gameScore = 0;
@@ -263,7 +426,7 @@ const MODE_NORMAL = 1, MODE_ENDLESS = 2, MODE_PRACTICE = 3;
         clearInterval(_gameTime);
         let cps = getCPS();
         updatePanel();
-        setTimeout(function () {
+        _gameOverTimer = setTimeout(function () {
             GameLayerBG.className = '';
             showGameScoreLayer(cps);
             foucusOnReplay();
@@ -415,8 +578,9 @@ const MODE_NORMAL = 1, MODE_ENDLESS = 2, MODE_PRACTICE = 3;
 
     function showWelcomeLayer() {
         welcomeLayerClosed = false;
-        $('#mode').text(modeToString(mode));
+        $('#mode-label').text(modeToString(mode));
         $('#welcome').css('display', 'block');
+        $('#start').focus();
     }
 
     function getBestScore(score) {
@@ -523,16 +687,6 @@ const MODE_NORMAL = 1, MODE_ENDLESS = 2, MODE_PRACTICE = 3;
             $('title').text(cookie('title'));
             $('#title').val(cookie('title'));
         }
-        let keyboard = cookie('keyboard');
-        if (keyboard) {
-            keyboard = keyboard.toString().toLowerCase();
-            $("#keyboard").val(keyboard);
-            map = {}
-            map[keyboard.charAt(0)] = 1;
-            map[keyboard.charAt(1)] = 2;
-            map[keyboard.charAt(2)] = 3;
-            map[keyboard.charAt(3)] = 4;
-        }
         if (cookie('gameTime')) {
             $('#gameTime').val(cookie('gameTime'));
             _gameSettingNum = parseInt(cookie('gameTime'));
@@ -548,11 +702,20 @@ const MODE_NORMAL = 1, MODE_ENDLESS = 2, MODE_PRACTICE = 3;
     w.show_setting = function() {
         $('#btn_group,#desc').css('display', 'none')
         $('#setting').css('display', 'block')
-        $('#sound').text(soundMode === 'on' ? I18N['sound-on'] : I18N['sound-off']);
+        $('#sound-label').text(soundMode === 'on' ? I18N['sound-on'] : I18N['sound-off']);
+        renderKeybindSettings();
+        $('#sound').focus();
+    }
+
+    w.settingsOk = function() {
+        stopRebinding();
+        w.show_btn();
+        w.save_cookie();
+        $('#start').focus();
     }
 
     w.save_cookie = function() {
-        const settings = ['username', 'message', 'keyboard', 'title', 'gameTime'];
+        const settings = ['username', 'message', 'title', 'gameTime'];
         for (let s of settings) {
             let value=$(`#${s}`).val();
             if(value){

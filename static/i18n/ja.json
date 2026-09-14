@@ -55,5 +55,17 @@
   "no-message": "メッセージなし",
   "self-record": "{name} の最高記録. アップロード {attempts} 回<br/>スコア:{score} {time}",
   "no-self-record": "{name} の記録がありません(Or filtered)",
-  "no-name-tip": "ヒント：始める前に名前を入力していません"
+  "no-name-tip": "ヒント：始める前に名前を入力していません",
+  "kb-lane1": "レーン1",
+  "kb-lane2": "レーン2",
+  "kb-lane3": "レーン3",
+  "kb-lane4": "レーン4",
+  "kb-start": "スタート",
+  "kb-retry": "リトライ",
+  "kb-back": "戻る/ホーム",
+  "kb-mode": "モード切替",
+  "kb-settings": "設定",
+  "kb-sound": "サウンド切替",
+  "kb-press": "キーを押してください…",
+  "kb-reset": "キーをリセット"
 }

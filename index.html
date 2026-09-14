@@ -31,8 +31,8 @@
             <div class="col-3" data-i18n="best"></div>
             <div class="col-2" id="best"></div>
         </div>
-        <button type="button" class="btn btn-secondary btn-lg" id="replay" onclick="replayBtn()" data-i18n="again">AGAIN-I18N</button>
-        <button type="button" class="btn btn-secondary btn-lg" onclick="window.location.reload()" data-i18n="home">HOME-I18N</button>
+        <button type="button" class="btn btn-secondary btn-lg" id="replay" onclick="replayBtn()"><span data-i18n="again">AGAIN-I18N</span><kbd class="kb-hint" data-kb="retry"></kbd></button>
+        <button type="button" class="btn btn-secondary btn-lg" onclick="backBtn()"><span data-i18n="home">HOME-I18N</span><kbd class="kb-hint" data-kb="back"></kbd></button>
         <button type="button" class="btn btn-secondary btn-lg" onclick="window.location.href='https://github.com/arcxingye/EatKano'" data-i18n="repo">REPO-I18N</button>
     </div>
 </div>
@@ -50,25 +50,25 @@
             </div>
             <div id="btn_group" class="container text-nowrap">
                 <div class="d-flex justify-content-center flex-column flex-fill">
-                    <a class="btn btn-primary btn-lg mb-3" onclick="readyBtn()" data-i18n="start">START-I18N</a>
+                    <button type="button" id="start" class="btn btn-primary btn-lg mb-3" onclick="readyBtn()"><span data-i18n="start">START-I18N</span><kbd class="kb-hint" data-kb="start"></kbd></button>
                     <div class="dropdown mb-3">
-                        <a class="w-100 btn btn-secondary btn-lg" href="javascript: void(0);" role="button" id="mode" data-bs-toggle="dropdown" aria-expanded="false" data-i18n="normal">NORMAL-I18N</a>
+                        <button type="button" class="w-100 btn btn-secondary btn-lg" id="mode" data-bs-toggle="dropdown" aria-expanded="false"><span id="mode-label" data-i18n="normal">NORMAL-I18N</span><kbd class="kb-hint" data-kb="mode"></kbd></button>
                         <ul class="dropdown-menu" aria-labelledby="mode">
-                            <li><a class="dropdown-item" onclick="changeMode(MODE_NORMAL)" data-i18n="normal">NORMAL-I18N</a></li>
-                            <li><a class="dropdown-item" onclick="changeMode(MODE_ENDLESS)" data-i18n="endless">ENDLESS-I18N</a></li>
-                            <li><a class="dropdown-item" onclick="changeMode(MODE_PRACTICE)" data-i18n="practice">PRACTICE-I18N</a></li>
+                            <li><button type="button" class="dropdown-item" onclick="changeMode(MODE_NORMAL)" data-i18n="normal">NORMAL-I18N</button></li>
+                            <li><button type="button" class="dropdown-item" onclick="changeMode(MODE_ENDLESS)" data-i18n="endless">ENDLESS-I18N</button></li>
+                            <li><button type="button" class="dropdown-item" onclick="changeMode(MODE_PRACTICE)" data-i18n="practice">PRACTICE-I18N</button></li>
                         </ul>
                     </div>
-                    <a class="btn btn-secondary btn-lg" onclick="show_setting()" data-i18n="settings">SETTINGS-I18N</a>
+                    <button type="button" class="btn btn-secondary btn-lg" onclick="show_setting()"><span data-i18n="settings">SETTINGS-I18N</span><kbd class="kb-hint" data-kb="settings"></kbd></button>
                 </div>
             </div>
             <div id="setting" class="container" style="display: none;">
                 <div class="container mb-3 btn-group">
-                    <a data-i18n="img-before" type="button" class="btn text-nowrap btn-secondary me-1" onclick="getClickBeforeImage()" style="left: 0">IMG-BEFORE-I18N</a>
+                    <button data-i18n="img-before" type="button" class="btn text-nowrap btn-secondary me-1" onclick="getClickBeforeImage()" style="left: 0">IMG-BEFORE-I18N</button>
                     <input type="file" id="click-before-image" accept="image/*" class="d-none" onchange="saveClickBeforeImage()">
-                    <a data-i18n="img-after" type="button" class="btn text-nowrap btn-secondary me-1" onclick="getClickAfterImage()" style="right: 0">IMG-AFTER-I18N</a>
+                    <button data-i18n="img-after" type="button" class="btn text-nowrap btn-secondary me-1" onclick="getClickAfterImage()" style="right: 0">IMG-AFTER-I18N</button>
                     <input type="file" id="click-after-image" accept="image/*" style="display: none;" onchange="saveClickAfterImage()">
-                    <a id="sound" type="button" class="btn text-nowrap btn-secondary" onclick="changeSoundMode()"></a>
+                    <button id="sound" type="button" class="btn text-nowrap btn-secondary" onclick="changeSoundMode()"><span id="sound-label"></span><kbd class="kb-hint" data-kb="sound"></kbd></button>
                 </div>
                 <div class="input-group mb-3">
                     <div class="input-group-prepend col-2">
@@ -76,11 +76,12 @@
                     </div>
                     <input data-placeholder-i18n="eat-kano" type="text" id="title" class="form-control" placeholder="EAT-KANO-I18N">
                 </div>
-                <div class="input-group mb-3">
-                    <div class="input-group-prepend col-2">
-                        <span data-i18n="key" class="input-group-text">KEY-I18N</span>
+                <div class="mb-3 text-white">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span data-i18n="key">KEY-I18N</span>
+                        <button type="button" class="btn btn-sm btn-outline-light" onclick="resetKeybinds()" data-i18n="kb-reset">KB-RESET-I18N</button>
                     </div>
-                    <input data-placeholder-i18n="default-dfjk" type="text" id="keyboard" class="form-control" maxlength=4 placeholder="DFJK-I18N">
+                    <div id="keybinds"></div>
                 </div>
                 <div class="input-group mb-3">
                     <div class="input-group-prepend col-2">
@@ -88,7 +89,7 @@
                     </div>
                     <input data-placeholder-i18n="default-20s" type="text" id="gameTime" class="form-control" maxlength=4 placeholder="default-20s">
                 </div>
-                <button type="button" class="btn btn-secondary btn-lg" onclick="show_btn();save_cookie();" data-i18n="ok">OK-I18N</button>
+                <button type="button" class="btn btn-secondary btn-lg" onclick="settingsOk()"><span data-i18n="ok">OK-I18N</span><kbd class="kb-hint" data-kb="back"></kbd></button>
             </div>
         </div>
     </div>

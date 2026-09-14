@@ -253,27 +253,11 @@ body {
     display: none;
 }
 
+/* Wide enough for the button text and its key hint. */
 #btn_group {
-    width: 37.5%;
-    max-width: 200px;
-}
-
-@media (max-width: 450px) {
-    #btn_group {
-        max-width: 110px !important;
-    }
-}
-
-@media (max-width: 600px) {
-    #btn_group {
-        max-width: 125px;
-    }
-}
-
-@media (max-width: 800px) {
-    #btn_group {
-        max-width: 150px;
-    }
+    width: max-content;
+    min-width: 110px;
+    max-width: 100%;
 }
 
 #setting {
@@ -292,4 +276,53 @@ body {
 
 .dropdown-item {
     cursor: pointer;
+}
+/* Keyboard hints and keybind settings */
+.kb-hint {
+    font-size: 0.6em;
+    margin-left: 0.5em;
+    padding: 0.1em 0.4em;
+    vertical-align: middle;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.kb-hint:empty {
+    display: none;
+}
+
+@media (hover: none) {
+    .kb-hint {
+        display: none;
+    }
+}
+
+#keybinds {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13em, 1fr));
+    gap: 0.3em 1em;
+    max-height: 45vh;
+    overflow-y: auto;
+    font-size: 0.8em;
+    text-align: left;
+}
+
+.keybind-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5em;
+}
+
+.keybind-btn {
+    flex-shrink: 0;
+    width: 7.5em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: monospace;
+}
+
+.keybind-btn.active {
+    background: #FEF002;
+    border-color: #FEF002;
 }

@@ -55,5 +55,17 @@
   "no-message": "No message",
   "self-record": "{name} highest record. Uploaded {attempts} times<br/>SCORE:{score} {time}",
   "no-self-record": "No record of {name} (Or filtered)",
-  "no-name-tip": "Tip: you won't fill in your name before playing"
+  "no-name-tip": "Tip: you won't fill in your name before playing",
+  "kb-lane1": "Lane 1",
+  "kb-lane2": "Lane 2",
+  "kb-lane3": "Lane 3",
+  "kb-lane4": "Lane 4",
+  "kb-start": "Start",
+  "kb-retry": "Retry",
+  "kb-back": "Back / home",
+  "kb-mode": "Change mode",
+  "kb-settings": "Settings",
+  "kb-sound": "Sound on/off",
+  "kb-press": "Press key…",
+  "kb-reset": "Reset keys"
 }
